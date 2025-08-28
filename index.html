@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Телетур</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="spectre.min.css">
+    <link rel="stylesheet" href="spectre-icons.min.css">
+    <script>
+        const mainButton = window.Telegram.WebApp.MainButton;
+        mainButton.text = "Save Preferences";
+        mainButton.enable();
+        mainButton.show();
+    </script>
+</head>
+
+<body class="text-center">
+    <h1 class="d-block ">3 vs 4</h1>
+    Кто победил?
+    <div class="form-group">
+        <label class="form-radio form-inline">
+            <input type="radio" name="gender" checked=""><i class="form-icon"></i> 3
+        </label>
+        <label class="form-radio form-inline">
+            <input type="radio" name="gender"><i class="form-icon"></i> 4
+        </label>
+    </div>
+    Штраф?
+    <div class="form-group">
+        <label class="form-checkbox form-inline">
+            <input type="checkbox"><i class="form-icon"></i> Штраф 3
+        </label>
+        <label class="form-checkbox form-inline">
+            <input type="checkbox" checked=""><i class="form-icon"></i> Штраф 4
+        </label>
+    </div>
+    <input class="slider tooltip" type="range" min="0" max="1" value="0" oninput="this.setAttribute('value', this.value);">
+</body>
+
+</html>
