@@ -1,60 +1,142 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Телетур</title>
+    <title>Результат игры</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="spectre.min.css">
-    <link rel="stylesheet" href="spectre-icons.min.css">
-    <script>
-        const mainButton = window.Telegram.WebApp.MainButton;
-        mainButton.text = "Save Preferences";
-        mainButton.enable();
-        mainButton.show();
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.9/spectre.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.9/spectre-icons.min.css">
+    <style>
+        body {
+            padding: 1rem;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .player-card {
+            padding: 1rem;
+            border: 1px solid #dadee4;
+            border-radius: 0.2rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .player-card:hover {
+            background-color: #f7f8f9;
+        }
+        .player-card.selected {
+            background-color: var(--tg-theme-button-color, #5755d9);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border-color: var(--tg-theme-button-color, #5755d9);
+        }
+        .penalty-section {
+            margin-top: 1.5rem;
+        }
+        h5 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+    </style>
 </head>
+<body>
+    <div class="container">
+        <h4>Результат игры</h4>
+        
+        <div class="form-group">
+            <h5>Кто победил?</h5>
+            <div class="player-card" data-player="1">
+                <div class="form-label">Игрок 1</div>
+            </div>
+            <div class="player-card" data-player="2">
+                <div class="form-label">Игрок 2</div>
+            </div>
+        </div>
 
-<body class="text-center">
-    <h1 class="d-block ">3 vs 4</h1>
-    Кто победил?
-    <div class="form-group">
-        <label class="form-radio form-inline">
-            <input type="radio" name="gender" checked=""><i class="form-icon"></i> 3
-        </label>
-        <label class="form-radio form-inline">
-            <input type="radio" name="gender"><i class="form-icon"></i> 4
-        </label>
+        <div class="penalty-section">
+            <h5>Штрафы</h5>
+            <label class="form-checkbox">
+                <input type="checkbox" id="penalty1">
+                <i class="form-icon"></i> Штраф игроку 1
+            </label>
+            <label class="form-checkbox">
+                <input type="checkbox" id="penalty2">
+                <i class="form-icon"></i> Штраф игроку 2
+            </label>
+        </div>
     </div>
-    Штраф?
-    <div class="form-group">
-        <label class="form-checkbox form-inline">
-            <input type="checkbox"><i class="form-icon"></i> Штраф 3
-        </label>
-        <label class="form-checkbox form-inline">
-            <input type="checkbox" checked=""><i class="form-icon"></i> Штраф 4
-        </label>
-    </div>
-    <input class="slider tooltip" type="range" min="0" max="1" value="0"
-        oninput="this.setAttribute('value', this.value);">
-    <div id="output"></div>
 
     <script>
-        // Получаем объект с параметрами из текущего URL
-        const params = new URLSearchParams(window.location.search);
+        let selectedWinner = null;
+        let tg = null;
+        let mainButton = null;
 
-        // Например: ?name=Ivan&age=25
-        const name = params.get("name");
-        const age = params.get("age");
+        // Инициализация после загрузки страницы
+        window.addEventListener('load', function() {
+            // Проверяем наличие Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.expand();
+                
+                mainButton = tg.MainButton;
+                mainButton.text = "Отправить результат";
+                mainButton.disable();
+                mainButton.show();
 
-        // Выводим на страницу
-        const output = document.getElementById("output");
-        output.innerHTML = `
-      <p>Имя: ${name ?? "не задано"}</p>
-      <p>Возраст: ${age ?? "не задан"}</p>
-    `;
+                mainButton.onClick(function() {
+                    const data = {
+                        winner: selectedWinner,
+                        penalties: {
+                            player1: document.getElementById('penalty1').checked,
+                            player2: document.getElementById('penalty2').checked
+                        }
+                    };
+                    
+                    tg.sendData(JSON.stringify(data));
+                });
+
+                // Обновляем цвета в соответствии с темой Telegram
+                if (tg.themeParams) {
+                    document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+                    document.body.style.color = tg.themeParams.text_color || '#000000';
+                }
+            } else {
+                console.warn('Telegram WebApp не доступен. Приложение работает в режиме предварительного просмотра.');
+            }
+
+            // Добавляем обработчики кликов на карточки игроков
+            document.querySelectorAll('.player-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const player = parseInt(this.getAttribute('data-player'));
+                    selectWinner(player);
+                });
+            });
+        });
+
+        function selectWinner(player) {
+            selectedWinner = player;
+            document.querySelectorAll('.player-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`.player-card[data-player="${player}"]`).classList.add('selected');
+            updateMainButton();
+        }
+
+        function updateMainButton() {
+            if (mainButton) {
+                if (selectedWinner) {
+                    mainButton.enable();
+                } else {
+                    mainButton.disable();
+                }
+            }
+        }
     </script>
 </body>
-
 </html>
