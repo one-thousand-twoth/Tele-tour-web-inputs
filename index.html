@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Результат игры</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.9/spectre.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectre.css/0.5.9/spectre-icons.min.css">
+    <link rel="stylesheet" href="spectre.min.css">
+    <link rel="stylesheet" href="spectre-icons.min.css">
     <style>
         body {
             padding: 1rem;
@@ -16,6 +16,17 @@
         .container {
             max-width: 500px;
             margin: 0 auto;
+        }
+        .table-info {
+            text-align: center;
+            padding: 1rem;
+            background-color: #f7f8f9;
+            border-radius: 0.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .table-info h3 {
+            margin: 0;
+            color: #5755d9;
         }
         .form-group {
             margin-bottom: 1.5rem;
@@ -36,6 +47,11 @@
             color: var(--tg-theme-button-text-color, #ffffff);
             border-color: var(--tg-theme-button-color, #5755d9);
         }
+        .player-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.2rem;
+        }
         .penalty-section {
             margin-top: 1.5rem;
         }
@@ -43,19 +59,29 @@
             margin-bottom: 0.5rem;
             font-weight: 600;
         }
+        .form-checkbox {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="table-info">
+            <h3 id="tableNumber">Стол —</h3>
+        </div>
+
         <h4>Результат игры</h4>
         
         <div class="form-group">
             <h5>Кто победил?</h5>
             <div class="player-card" data-player="1">
-                <div class="form-label">Игрок 1</div>
+                <div class="player-number" id="player1Number">#—</div>
+                <!-- <div class="form-label">Игрок 1</div> -->
             </div>
             <div class="player-card" data-player="2">
-                <div class="form-label">Игрок 2</div>
+                <div class="player-number" id="player2Number">#—</div>
+                <!-- <div class="form-label">Игрок 2</div> -->
             </div>
         </div>
 
@@ -63,11 +89,11 @@
             <h5>Штрафы</h5>
             <label class="form-checkbox">
                 <input type="checkbox" id="penalty1">
-                <i class="form-icon"></i> Штраф игроку 1
+                <i class="form-icon"></i> Штраф игроку <span id="penalty1Label">#—</span>
             </label>
             <label class="form-checkbox">
                 <input type="checkbox" id="penalty2">
-                <i class="form-icon"></i> Штраф игроку 2
+                <i class="form-icon"></i> Штраф игроку <span id="penalty2Label">#—</span>
             </label>
         </div>
     </div>
@@ -76,9 +102,22 @@
         let selectedWinner = null;
         let tg = null;
         let mainButton = null;
+        
+        // Получаем параметры из URL
+        const params = new URLSearchParams(window.location.search);
+        const player1Id = params.get("proto") || "1";
+        const player2Id = params.get("anto") || "2";
+        const tableNumber = params.get("table") || "1";
 
         // Инициализация после загрузки страницы
         window.addEventListener('load', function() {
+            // Устанавливаем номера игроков и стола
+            document.getElementById('tableNumber').textContent = `Стол ${tableNumber}`;
+            document.getElementById('player1Number').textContent = `#${player1Id}`;
+            document.getElementById('player2Number').textContent = `#${player2Id}`;
+            document.getElementById('penalty1Label').textContent = `#${player1Id}`;
+            document.getElementById('penalty2Label').textContent = `#${player2Id}`;
+
             // Проверяем наличие Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 tg = window.Telegram.WebApp;
@@ -91,7 +130,10 @@
 
                 mainButton.onClick(function() {
                     const data = {
-                        winner: selectedWinner,
+                        table: tableNumber,
+                        player1: player1Id,
+                        player2: player2Id,
+                        winner: selectedWinner === 1 ? player1Id : player2Id,
                         penalties: {
                             player1: document.getElementById('penalty1').checked,
                             player2: document.getElementById('penalty2').checked
